@@ -79,7 +79,8 @@ func debugPrint(format string, values ...any) {
 		if !strings.HasSuffix(format, "\n") {
 			format += "\n"
 		}
-		_, _ = os.Stderr.WriteString("[GIN-debug] " + format)
+		// Write debug output to stdout instead of stderr for easier log capture in dev.
+		_, _ = os.Stdout.WriteString("[GIN-debug] " + format)
 	}
 }
 
@@ -103,27 +104,4 @@ func debugPrintWARNINGDefault() {
 }
 
 func debugPrintWARNINGNew() {
-	debugPrint(`[WARNING] Running in "debug" mode. Switch to "release" mode in production.\n` +
-		" - using env:\t\texport GIN_MODE=release\n" +
-		" - using code:\t\tgin.SetMode(gin.ReleaseMode)\n\n")
-}
-
-func debugPrintError(err error) {
-	if err != nil && IsDebugging() {
-		debugPrint("[ERROR] %v\n", err)
-	}
-}
-
-// WrapF is a helper function for wrapping http.HandlerFunc and returns a Gin middleware.
-func WrapF(f http.HandlerFunc) HandlerFunc {
-	return func(c *Context) {
-		f(c.Writer, c.Request)
-	}
-}
-
-// WrapH is a helper function for wrapping http.Handler and returns a Gin middleware.
-func WrapH(h http.Handler) HandlerFunc {
-	return func(c *Context) {
-		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
+	debugPrint(`[WARNING] Running
