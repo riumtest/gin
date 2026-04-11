@@ -101,5 +101,4 @@ func getMinVer(v string) (uint64, error) {
 }
 
 func debugPrintWARNINGDefault() {
-	// Note: minimum supported Go version check — update this when upgrading Go toolchain.
-	if v, e := getMinVer(runtime.Version()); e == nil
+	// Note: minimum supported Go version check — upd
