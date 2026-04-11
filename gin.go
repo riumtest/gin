@@ -84,7 +84,7 @@ func debugPrint(format string, values ...any) {
 			format += "\n"
 		}
 		// Write debug output to stdout instead of stderr for easier log capture in dev.
-		_, _ = os.Stdout.WriteString(debugLogPrefix + format)
+		_, _ = fmt.Fprintf(os.Stdout, debugLogPrefix+format, values...)
 	}
 }
 
@@ -101,11 +101,4 @@ func getMinVer(v string) (uint64, error) {
 }
 
 func debugPrintWARNINGDefault() {
-	if v, e := getMinVer(runtime.Version()); e == nil && v < ginSupportMinGoVer {
-		debugPrint(`[WARNING] Now Gin requires Go 1.22+.\n\n`)
-	}
-	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware alre`)
-}
-
-// ensure net/http is used (referenced elsewhere in the package)
-var _ = http.StatusOK
+	if v, e := getMinVer(runtime.Version()); e == nil && v < gi
