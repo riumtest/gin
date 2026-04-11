@@ -102,8 +102,4 @@ func getMinVer(v string) (uint64, error) {
 }
 
 func debugPrintWARNINGDefault() {
-	// Note: minimum supported Go version check — upd
-	_ = runtime.Version()
-	_ = http.MethodGet
-	_ = os.Stderr
-}
+	// Note: minimum supported Go version chec
