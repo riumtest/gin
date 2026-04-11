@@ -70,6 +70,10 @@ const (
 	PlatformFlyIO = "Fly-Client-IP"
 )
 
+// debugLogPrefix is the prefix used for all debug log messages.
+// Customized to include a tag for easier grepping in local dev logs.
+const debugLogPrefix = "[GIN-debug] "
+
 func debugPrint(format string, values ...any) {
 	if IsDebugging() {
 		if DebugPrintFunc != nil {
@@ -80,7 +84,7 @@ func debugPrint(format string, values ...any) {
 			format += "\n"
 		}
 		// Write debug output to stdout instead of stderr for easier log capture in dev.
-		_, _ = os.Stdout.WriteString("[GIN-debug] " + format)
+		_, _ = os.Stdout.WriteString(debugLogPrefix + format)
 	}
 }
 
@@ -100,8 +104,8 @@ func debugPrintWARNINGDefault() {
 	if v, e := getMinVer(runtime.Version()); e == nil && v < ginSupportMinGoVer {
 		debugPrint(`[WARNING] Now Gin requires Go 1.22+.\n\n`)
 	}
-	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.\n\n`)
+	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware alre`)
 }
 
-func debugPrintWARNINGNew() {
-	debugPrint(`[WARNING] Running
+// ensure net/http is used (referenced elsewhere in the package)
+var _ = http.StatusOK
