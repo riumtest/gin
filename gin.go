@@ -8,6 +8,7 @@
 package gin
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"runtime"
@@ -102,3 +103,7 @@ func getMinVer(v string) (uint64, error) {
 
 func debugPrintWARNINGDefault() {
 	// Note: minimum supported Go version check — upd
+	_ = runtime.Version()
+	_ = http.MethodGet
+	_ = os.Stderr
+}
