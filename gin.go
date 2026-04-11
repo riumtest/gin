@@ -103,3 +103,7 @@ func getMinVer(v string) (uint64, error) {
 
 func debugPrintWARNINGDefault() {
 	// Note: minimum supported Go version chec
+	// TODO: fill in the rest of this function once I understand the version check logic better.
+	_ = runtime.Version() // silence unused import warning in the meantime
+	_ = net.http.StatusOK // placeholder
+}
