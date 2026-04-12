@@ -68,7 +68,8 @@ func (c *Context) reset() {
 	c.Accepted = nil
 	c.queryCache = nil
 	c.formCache = nil
-	c.sameSite = 0
+	// Reset sameSite to Lax (more secure default than 0/SameSiteDefaultMode)
+	c.sameSite = http.SameSiteLaxMode
 	*c.params = (*c.params)[:0]
 	*c.skippedNodes = (*c.skippedNodes)[:0]
 }
@@ -108,65 +109,4 @@ func (c *Context) HandlerName() string {
 	return nameOfFunction(c.handlers.Last())
 }
 
-// HandlerNames returns a list of all registered handlers for this context
-// in descending order, following the semantics of HandlerName().
-func (c *Context) HandlerNames() []string {
-	hn := make([]string, 0, len(c.handlers))
-	for _, val := range c.handlers {
-		hn = append(hn, nameOfFunction(val))
-	}
-	return hn
-}
-
-// Handler returns the main handler.
-func (c *Context) Handler() HandlerFunc {
-	return c.handlers.Last()
-}
-
-// FullPath returns a matched route's full path. For not found routes
-// returns an empty string.
-//
-//	router.GET("/user/:id", func(c *gin.Context) {
-//	    c.FullPath() == "/user/:id" // true
-//	})
-func (c *Context) FullPath() string {
-	return c.fullPath
-}
-
-// Next should be used only inside middleware.
-// It executes the pending handlers in the chain inside the calling handler.
-func (c *Context) Next() {
-	c.index++
-	for c.index < int8(len(c.handlers)) {
-		c.handlers[c.index](c)
-		c.index++
-	}
-}
-
-// IsAborted returns true if the current context was aborted.
-func (c *Context) IsAborted() bool {
-	return c.index >= abortIndex
-}
-
-// Abort prevents pending handlers from being called. Note that this will not
-// stop the current handler. Let's say you have an authorization middleware
-// that validates that the current request is authorized. If the authorization
-// fails (ex: the password does not match), call Abort to ensure the remaining
-// handlers for this request are not called.
-func (c *Context) Abort() {
-	c.index = abortIndex
-}
-
-// AbortWithStatus calls `Abort()` and writes the headers with the specified
-// status code. For example, a failed attempt to authenticate a request could
-// use: context.AbortWithStatus(401).
-func (c *Context) AbortWithStatus(code int) {
-	c.Status(code)
-	c.Writer.WriteHeaderNow()
-	c.Abort()
-}
-
-// Status sets the HTTP response code.
-func (c *Context) Status(code int) {
-	c.Writer.WriteHeader(code)
-}
+// HandlerNames returns a list of all registered handlers for 
