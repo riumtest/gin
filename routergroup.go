@@ -11,18 +11,6 @@ import (
 	"strings"
 )
 
-var (
-	// regEnLetter matches english letters for http method name
-	regEnLetter = regexp.MustCompile("^[A-Z]+$")
-
-	// anyMethods for RouterGroup Any method
-	anyMethods = []string{
-		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch,
-		http.MethodHead, http.MethodOptions, http.MethodDelete, http.MethodConnect,
-		http.MethodTrace,
-	}
-)
-
 // IRouter defines all router handle interface includes single and group router.
 type IRouter interface {
 	IRoutes
@@ -42,7 +30,6 @@ type IRoutes interface {
 	PUT(string, ...HandlerFunc) IRoutes
 	OPTIONS(string, ...HandlerFunc) IRoutes
 	HEAD(string, ...HandlerFunc) IRoutes
-	Match([]string, string, ...HandlerFunc) IRoutes
 
 	StaticFile(string, string) IRoutes
 	StaticFileFS(string, string, http.FileSystem) IRoutes
@@ -67,8 +54,9 @@ func (group *RouterGroup) Use(middleware ...HandlerFunc) IRoutes {
 	return group.returnObj()
 }
 
-// Group creates a new router group. You should add all the routes that have common middlewares or the same path prefix.
-// For example, all the routes that use a common middleware for authorization could be grouped.
+// Group creates a new router group. You should add all the routes that have common
+// middlewares or the same path prefix. For example, all the routes that use a common
+// middleware for authorization could be grouped.
 func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *RouterGroup {
 	return &RouterGroup{
 		Handlers: group.combineHandlers(handlers),
@@ -77,7 +65,7 @@ func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *R
 	}
 }
 
-// BasePath returns the base path of router group.
+// BasePath returns the base path of the router group.
 // For example, if v := router.Group("/rest/n/v1/api"), v.BasePath() is "/rest/n/v1/api".
 func (group *RouterGroup) BasePath() string {
 	return group.basePath
@@ -91,15 +79,8 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 }
 
 // Handle registers a new request handle and middleware with the given path and method.
-// The last handler should be the real handler, the other ones should be middleware that can and should be shared among different routes.
-// See the example code in GitHub.
-//
-// For GET, POST, PUT, PATCH and DELETE requests the respective shortcut
-// functions can be used.
-//
-// This function is intended for bulk loading and to allow the usage of less
-// frequently used, non-standardized or custom methods (e.g. for internal
-// communication with a proxy).
+// The last handler should be the real handler, the other ones should be middleware that
+// can and should be shared among different routes.
 func (group *RouterGroup) Handle(httpMethod, relativePath string, handlers ...HandlerFunc) IRoutes {
 	if matched := regEnLetter.MatchString(httpMethod); !matched {
 		panic("http method " + httpMethod + " is not valid")
@@ -148,16 +129,6 @@ func (group *RouterGroup) Any(relativePath string, handlers ...HandlerFunc) IRou
 	for _, method := range anyMethods {
 		group.handle(method, relativePath, handlers)
 	}
-
-	return group.returnObj()
-}
-
-// Match registers a route that matches the specified methods that you declared.
-func (group *RouterGroup) Match(methods []string, relativePath string, handlers ...HandlerFunc) IRoutes {
-	for _, method := range methods {
-		group.handle(method, relativePath, handlers)
-	}
-
 	return group.returnObj()
 }
 
@@ -170,8 +141,6 @@ func (group *RouterGroup) StaticFile(relativePath, filepath string) IRoutes {
 }
 
 // StaticFileFS works just like `StaticFile` but a custom `http.FileSystem` can be used instead.
-// router.StaticFileFS("favicon.ico", "./resources/favicon.ico", Dir{".", false})
-// Gin by default uses: gin.Dir()
 func (group *RouterGroup) StaticFileFS(relativePath, filepath string, fs http.FileSystem) IRoutes {
 	return group.staticFileHandler(relativePath, func(c *Context) {
 		c.FileFromFS(filepath, fs)
@@ -188,26 +157,22 @@ func (group *RouterGroup) staticFileHandler(relativePath string, handler Handler
 }
 
 // Static serves files from the given file system root.
-// Internally a http.FileServer is used, therefore http.NotFound is used instead
-// of the Router's NotFound handler.
-// To use the operating system's file system implementation,
-// use :
+// Internally a `http.FileServer` is used, therefore `http.NotFound` is used instead
+// of the Router's `NotFound` handler.
+// To use the operating system's file system implementation, use :
 //
 //	router.Static("/static", "/var/www")
 func (group *RouterGroup) Static(relativePath, root string) IRoutes {
 	return group.StaticFS(relativePath, Dir(root, false))
 }
 
-// StaticFS works just like `Static()` but a custom `http.FileSystem` can be used instead.
-// Gin by default uses: gin.Dir()
+// StaticFS works just like `Static` but a custom `http.FileSystem` can be used instead.
 func (group *RouterGroup) StaticFS(relativePath string, fs http.FileSystem) IRoutes {
 	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
 		panic("URL parameters can not be used when serving a static folder")
 	}
 	handler := group.createStaticHandler(relativePath, fs)
 	urlPattern := path.Join(relativePath, "/*filepath")
-
-	// Register GET and HEAD handlers
 	group.GET(urlPattern, handler)
 	group.HEAD(urlPattern, handler)
 	return group.returnObj()
@@ -216,31 +181,24 @@ func (group *RouterGroup) StaticFS(relativePath string, fs http.FileSystem) IRou
 func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc {
 	absolutePath := group.calculateAbsolutePath(relativePath)
 	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
-
 	return func(c *Context) {
-		if _, noListing := fs.(*OnlyFilesFS); noListing {
+		if _, noListing := fs.(*onlyFilesFS); noListing {
 			c.Writer.WriteHeader(http.StatusNotFound)
 		}
-
 		file := c.Param("filepath")
-		// Check if file exists and/or if we have permission to access it
-		f, err := fs.Open(file)
-		if err != nil {
+		if _, err := fs.Open(file); err != nil {
 			c.Writer.WriteHeader(http.StatusNotFound)
-			c.handlers = group.engine.noRoute
-			// Reset index
+			c.handlers = group.engine.allNoRoute
 			c.index = -1
+			c.Next()
 			return
 		}
-		f.Close()
-
 		fileServer.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
 func (group *RouterGroup) combineHandlers(handlers HandlersChain) HandlersChain {
 	finalSize := len(group.Handlers) + len(handlers)
-	assert1(finalSize < int(abortIndex), "too many handlers")
 	mergedHandlers := make(HandlersChain, finalSize)
 	copy(mergedHandlers, group.Handlers)
 	copy(mergedHandlers[len(group.Handlers):], handlers)
@@ -256,4 +214,14 @@ func (group *RouterGroup) returnObj() IRoutes {
 		return group.engine
 	}
 	return group
+}
+
+// regEnLetter matches english letters for http method check.
+var regEnLetter = regexp.MustCompile("^[A-Z]+$")
+
+// anyMethods contains all HTTP methods that Any() registers.
+var anyMethods = []string{
+	http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch,
+	http.MethodHead, http.MethodOptions, http.MethodDelete, http.MethodConnect,
+	http.MethodTrace,
 }
