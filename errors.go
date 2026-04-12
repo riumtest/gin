@@ -5,11 +5,10 @@
 package gin
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/gin-gonic/gin/codec/json"
 )
 
 // ErrorType is an unsigned 64-bit error code as defined in the gin spec.
@@ -26,6 +25,8 @@ const (
 	ErrorTypePublic ErrorType = 1 << 1
 	// ErrorTypeAny indicates any other error.
 	ErrorTypeAny ErrorType = 1<<64 - 1
+	// ErrorTypeNu is the default error type.
+	ErrorTypeNu = 2
 )
 
 // Error represents a error's specification.
@@ -51,7 +52,7 @@ func (msg *Error) SetMeta(data any) *Error {
 	return msg
 }
 
-// JSON creates a properly formatted JSON
+// JSON creates a properly formatted JSON object from this error.
 func (msg *Error) JSON() any {
 	jsonData := H{}
 	if msg.Meta != nil {
@@ -75,7 +76,7 @@ func (msg *Error) JSON() any {
 
 // MarshalJSON implements the json.Marshaller interface.
 func (msg *Error) MarshalJSON() ([]byte, error) {
-	return json.API.Marshal(msg.JSON())
+	return json.Marshal(msg.JSON())
 }
 
 // Error implements the error interface.
@@ -83,18 +84,17 @@ func (msg Error) Error() string {
 	return msg.Err.Error()
 }
 
-// IsType judges one error.
+// IsType judges one error whether in the given error types.
 func (msg *Error) IsType(flags ErrorType) bool {
 	return (msg.Type & flags) > 0
 }
 
-// Unwrap returns the wrapped error, to allow interoperability with errors.Is(), errors.As() and errors.Unwrap()
-func (msg Error) Unwrap() error {
+// Unwrap returns the wrapped error, implementing the errors.Unwrap interface.
+func (msg *Error) Unwrap() error {
 	return msg.Err
 }
 
-// ByType returns a readonly copy filtered the byte.
-// ie ByType(gin.ErrorTypePublic) returns a slice of errors with type=ErrorTypePublic.
+// ByType returns a readonly copy filtered by the given error type.
 func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	if len(a) == 0 {
 		return nil
@@ -112,7 +112,6 @@ func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 }
 
 // Last returns the last error in the slice. It returns nil if the array is empty.
-// Shortcut for errors[len(errors)-1].
 func (a errorMsgs) Last() *Error {
 	if length := len(a); length > 0 {
 		return a[length-1]
@@ -121,12 +120,6 @@ func (a errorMsgs) Last() *Error {
 }
 
 // Errors returns an array with all the error messages.
-// Example:
-//
-//	c.Error(errors.New("first"))
-//	c.Error(errors.New("second"))
-//	c.Error(errors.New("third"))
-//	c.Errors.Errors() // == []string{"first", "second", "third"}
 func (a errorMsgs) Errors() []string {
 	if len(a) == 0 {
 		return nil
@@ -155,7 +148,7 @@ func (a errorMsgs) JSON() any {
 
 // MarshalJSON implements the json.Marshaller interface.
 func (a errorMsgs) MarshalJSON() ([]byte, error) {
-	return json.API.Marshal(a.JSON())
+	return json.Marshal(a.JSON())
 }
 
 func (a errorMsgs) String() string {
