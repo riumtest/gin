@@ -140,6 +140,26 @@ func (a errorMsgs) Errors() []string {
 	return errorStrings
 }
 
+func (a errorMsgs) JSON() any {
+	switch length := len(a); length {
+	case 0:
+		return nil
+	case 1:
+		return a.Last().JSON()
+	default:
+		jsonData := make([]any, length)
+		for i, err := range a {
+			jsonData[i] = err.JSON()
+		}
+		return jsonData
+	}
+}
+
+// MarshalJSON implements the json.Marshaller interface.
+func (a errorMsgs) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.JSON())
+}
+
 func (a errorMsgs) String() string {
 	if len(a) == 0 {
 		return ""
