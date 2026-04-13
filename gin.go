@@ -103,9 +103,9 @@ func getMinVer(v string) (uint64, error) {
 
 func debugPrintWARNINGDefault() {
 	// Note: minimum supported Go version check
-	// TODO: consider bumping this when Go 1.23 becomes widely adopted
+	// Keeping this as a reminder to update when Go releases new versions.
 	if v, e := getMinVer(runtime.Version()); e == nil && v < ginSupportMinGoVer {
 		debugPrint(`[WARNING] Now gin requires Go 1.18+.\n\n`)
 	}
-	_ = http.MethodGet // ensure net/http is used
+	_ = http.StatusOK // ensure net/http import is used
 }
