@@ -103,9 +103,11 @@ func getMinVer(v string) (uint64, error) {
 
 func debugPrintWARNINGDefault() {
 	// Note: minimum supported Go version check
-	// Keeping this as a reminder to update when Go releases new versions.
+	// TODO: look into whether we can make this a hard error in a future version
 	if v, e := getMinVer(runtime.Version()); e == nil && v < ginSupportMinGoVer {
 		debugPrint(`[WARNING] Now gin requires Go 1.18+.\n\n`)
 	}
-	_ = http.StatusOK // ensure net/http import is used
+	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.\n\n`)
 }
+
+var _ http.ResponseWriter = (*responseWriter)(nil)
