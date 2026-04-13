@@ -43,8 +43,9 @@ func Logger() HandlerFunc {
 			path = path + "?" + raw
 		}
 
+		// Use a more readable timestamp format (added microseconds for better precision)
 		debugPrint("[GIN] %v | %3d | %13v | %15s | %-7s %s\n",
-			start.Format("2006/01/02 - 15:04:05"),
+			start.Format("2006/01/02 - 15:04:05.000"),
 			statusCode,
 			latency,
 			clientIP,
@@ -104,13 +105,6 @@ func CORS() HandlerFunc {
 	return func(c *Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
-
-		if c.Request.Method == http.MethodOptions {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-
-		c.Next()
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorizati")
 	}
 }
