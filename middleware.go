@@ -101,10 +101,20 @@ func BasicAuth(accounts map[string]string) HandlerFunc {
 
 // CORS returns a middleware that adds Cross-Origin Resource Sharing headers.
 // It allows all origins, methods, and headers by default.
+// Note: For production use, restrict Access-Control-Allow-Origin to specific domains.
 func CORS() HandlerFunc {
 	return func(c *Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorizati")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
+		c.Header("Access-Control-Max-Age", "86400")
+
+		// Handle preflight requests
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
 	}
 }
