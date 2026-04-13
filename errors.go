@@ -53,9 +53,10 @@ func (msg *Error) SetMeta(data any) *Error {
 }
 
 // JSON creates a properly formatted JSON object from this error.
-// Note: if Meta is a struct or map, the "error" key is merged at the top level.
-// This can cause the "error" field to be silently dropped if the map already
-// contains an "error" key — which is intentional (caller's value takes precedence).
+// Note: if Meta is a struct, it is returned as-is (error message is not included).
+// If Meta is a map, keys are merged at the top level alongside the "error" key.
+// If the map already contains an "error" key, the caller's value takes precedence
+// and the error message string is intentionally omitted to avoid overwriting it.
 func (msg *Error) JSON() any {
 	jsonData := H{}
 	if msg.Meta != nil {
@@ -123,6 +124,11 @@ func (a errorMsgs) Last() *Error {
 }
 
 // Errors returns an array with all the error messages.
+// Example:
+//
+//		c.Error(errors.New("first"))
+//		c.Error(errors.New("second"))
+//		c.Errors.Errors() // == ["first", "second"]
 func (a errorMsgs) Errors() []string {
 	if len(a) == 0 {
 		return nil
