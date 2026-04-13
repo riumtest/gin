@@ -73,6 +73,9 @@ func (r JSON) WriteContentType(w http.ResponseWriter) {
 }
 
 // Render encodes the given data as JSON and writes it to the response.
+// Note: using json.NewEncoder would be slightly more memory-efficient for large
+// payloads, but Marshal gives us a chance to catch errors before writing the
+// status code / headers, which avoids sending a partial response on error.
 func (r JSON) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
 	jsonBytes, err := json.Marshal(r.Data)
@@ -99,7 +102,7 @@ func (r String) WriteContentType(w http.ResponseWriter) {
 	writeContentType(w, contentTypeText)
 }
 
-// Render formats the string with the given data and writes it to the response.
+ given data and writes it to the response.
 func (r String) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
 	if len(r.Data) > 0 {
@@ -108,30 +111,4 @@ func (r String) Render(w http.ResponseWriter) error {
 	}
 	_, err := fmt.Fprint(w, r.Format)
 	return err
-}
-
-// WriteContentType sets the Content-Type header for HTML responses.
-func (r HTMLTemplate) WriteContentType(w http.ResponseWriter) {
-	writeContentType(w, contentTypeHTML)
-}
-
-// Render executes the HTML template and writes the result to the response.
-func (r HTMLTemplate) Render(w http.ResponseWriter) error {
-	r.WriteContentType(w)
-	if r.Name == "" {
-		return r.Template.Execute(w, r.Data)
-	}
-	return r.Template.ExecuteTemplate(w, r.Name, r.Data)
-}
-
-// WriteContentType is a no-op for redirect responses.
-func (r Redirect) WriteContentType(_ http.ResponseWriter) {}
-
-// Render performs the HTTP redirect by sending the appropriate status code and Location header.
-func (r Redirect) Render(w http.ResponseWriter) error {
-	if (r.Code < http.StatusMultipleChoices || r.Code > http.StatusPermanentRedirect) && r.Code != http.StatusCreated {
-		return fmt.Errorf("cannot redirect with status code %d", r.Code)
-	}
-	http.Redirect(w, r.Request, r.Location, r.Code)
-	return nil
 }
