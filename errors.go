@@ -53,6 +53,9 @@ func (msg *Error) SetMeta(data any) *Error {
 }
 
 // JSON creates a properly formatted JSON object from this error.
+// Note: if Meta is a struct or map, the "error" key is merged at the top level.
+// This can cause the "error" field to be silently dropped if the map already
+// contains an "error" key — which is intentional (caller's value takes precedence).
 func (msg *Error) JSON() any {
 	jsonData := H{}
 	if msg.Meta != nil {
@@ -129,26 +132,6 @@ func (a errorMsgs) Errors() []string {
 		errorStrings[i] = err.Error()
 	}
 	return errorStrings
-}
-
-func (a errorMsgs) JSON() any {
-	switch length := len(a); length {
-	case 0:
-		return nil
-	case 1:
-		return a.Last().JSON()
-	default:
-		jsonData := make([]any, length)
-		for i, err := range a {
-			jsonData[i] = err.JSON()
-		}
-		return jsonData
-	}
-}
-
-// MarshalJSON implements the json.Marshaller interface.
-func (a errorMsgs) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.JSON())
 }
 
 func (a errorMsgs) String() string {
