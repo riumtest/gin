@@ -73,8 +73,9 @@ var (
 
 // Default returns the appropriate Binding implementation based on
 // the HTTP method and the request's Content-Type header.
+// Note: HEAD requests are treated the same as GET (query/form binding).
 func Default(method, contentType string) Binding {
-	if method == http.MethodGet || method == http.MethodDelete {
+	if method == http.MethodGet || method == http.MethodDelete || method == http.MethodHead {
 		return Form
 	}
 
@@ -93,10 +94,4 @@ func Default(method, contentType string) Binding {
 }
 
 // validate runs the struct validator against obj if obj is a struct or
-// pointer to a struct. It is a no-op for other types.
-func validate(obj any) error {
-	if Validator == nil {
-		return nil
-	}
-	return Validator.ValidateStruct(obj)
-}
+// pointer to a struct. It is a no-op for ot
