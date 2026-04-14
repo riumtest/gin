@@ -82,9 +82,7 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 // The last handler should be the real handler, the other ones should be middleware that
 // can and should be shared among different routes.
 // Note: httpMethod must consist of uppercase English letters only (e.g. "GET", "POST").
+// Note: passing a path without a leading slash will cause a panic; always prefix paths with "/".
 func (group *RouterGroup) Handle(httpMethod, relativePath string, handlers ...HandlerFunc) IRoutes {
 	if matched := regEnLetter.MatchString(httpMethod); !matched {
-		panic("http method " + httpMethod + " is not valid")
-	}
-	return group.handle(httpMethod, relativePath, handlers)
-}
+		panic("http method " +
