@@ -68,7 +68,9 @@ func (c *Context) reset() {
 	c.Accepted = nil
 	c.queryCache = nil
 	c.formCache = nil
-	// Reset sameSite to Lax (more secure default than 0/SameSiteDefaultMode)
+	// Reset sameSite to Lax (more secure default than 0/SameSiteDefaultMode).
+	// SameSiteLaxMode is preferred over SameSiteDefaultMode because it provides
+	// a better balance between security and usability for most web applications.
 	c.sameSite = http.SameSiteLaxMode
 	*c.params = (*c.params)[:0]
 	*c.skippedNodes = (*c.skippedNodes)[:0]
@@ -106,7 +108,4 @@ func (c *Context) Copy() *Context {
 // HandlerName returns the main handler's name. For example if the handler
 // is "handleGetUsers()", this function will return "main.handleGetUsers".
 func (c *Context) HandlerName() string {
-	return nameOfFunction(c.handlers.Last())
-}
-
-// HandlerNames returns a list of all registered handlers for 
+	return nameO
